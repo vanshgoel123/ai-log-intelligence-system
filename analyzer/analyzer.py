@@ -15,7 +15,7 @@ JIRA_TOKEN = os.getenv("JIRA_TOKEN")
 JIRA_PROJECT = os.getenv("JIRA_PROJECT", "OPS")
 
 CHECK_INTERVAL = 30
-DEDUP_TIME = 600   # 10 minutes
+DEDUP_TIME = 1800   # 30 minutes
 
 
 # GLOBAL MEMORY
@@ -26,7 +26,7 @@ previous_error_count = None
 # SERVICE HEALTH TRACKING
 service_error_tracker = {}
 
-SERVICE_DOWN_THRESHOLD = 30
+SERVICE_DOWN_THRESHOLD = 10
 
 # CONNECT ELASTICSEARCH
 def connect_elasticsearch():
@@ -59,12 +59,13 @@ def detect_service_downtime(service, count):
     service_error_tracker[service] += count
 
     if service_error_tracker[service] >= SERVICE_DOWN_THRESHOLD:
+        down_key = f"service-down:{service}"   # stable key
         summary = f"CRITICAL: {service} service appears DOWN ({service_error_tracker[service]} errors)"
 
-        if should_create_ticket(summary):
+        if should_create_ticket(down_key):
             print("SERVICE DOWN DETECTED:", summary)
             create_jira_ticket(summary)
-            incident_cache[summary] = datetime.now()
+            incident_cache[down_key] = datetime.now()
 
         service_error_tracker[service] = 0
 
@@ -104,7 +105,7 @@ def create_jira_ticket(summary):
             "project": {"key": JIRA_PROJECT},
             "summary": summary,
             "issuetype": {"name": "Bug"},
-            "description": summary
+            "priority": {"name": jira_priority_from_summary(summary)}
         }
     }
 
@@ -115,6 +116,7 @@ def create_jira_ticket(summary):
             auth=(JIRA_EMAIL, JIRA_TOKEN)
         )
         print("Jira response:", response.status_code)
+        print(response.text)
     except Exception as e:
         print("Jira error:", e)
 
@@ -128,6 +130,16 @@ def should_create_ticket(error):
         return True
 
     return False
+
+# JIRA PRIORITY FROM SUMMARY
+def jira_priority_from_summary(summary):
+    if summary.startswith("CRITICAL"):
+        return "Highest"
+    if summary.startswith("HIGH"):
+        return "High"
+    if summary.startswith("WARNING"):
+        return "Medium"
+    return "Low"
 
 
 # MAIN ANALYZER LOOP
