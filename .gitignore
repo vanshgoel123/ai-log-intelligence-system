@@ -1,3 +1,4 @@
 app.log
 health.log
 .env.example
+.env

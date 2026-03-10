@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from collections import Counter
 
 from elasticsearch import Elasticsearch
+from dotenv import load_dotenv
+load_dotenv()   # loads .env when running locally
 
 
 # ==============================
@@ -28,7 +30,7 @@ DEDUP_TIME = 600   # 10 minutes
 
 incident_cache = {}
 
-previous_error_count = 1
+previous_error_count = None    # None signals "warmup, don't check yet"
 
 
 # ==============================
@@ -250,15 +252,13 @@ while True:
         # ANOMALY DETECTION
         # =====================
 
-        if len(errors) > previous_error_count * 5 and len(errors) > 20:
-
+        if previous_error_count is not None and len(errors) > previous_error_count * 5 and len(errors) > 20:
             summary = f"ANOMALY: sudden error spike detected ({len(errors)} errors)"
-
-            print(summary)
-
-            create_jira_ticket(summary)
-
-        previous_error_count = len(errors)
+            if should_create_ticket(summary):
+                print(summary)
+                create_jira_ticket(summary)
+                incident_cache[summary] = datetime.now()
+        previous_error_count = max(len(errors), 1)
 
 
         # =====================

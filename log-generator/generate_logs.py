@@ -2,8 +2,9 @@ import time
 import random
 import uuid
 from datetime import datetime
+import os
 
-LOG_FILE = "../logs/app.log"
+LOG_FILE = os.getenv("LOG_FILE", "/logs/app.log")   # use env var, absolute path
 
 services = ["backend", "nginx", "database"]
 
