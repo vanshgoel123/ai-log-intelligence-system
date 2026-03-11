@@ -5,6 +5,6 @@ TARGET_URLS = os.getenv(
     "https://scholar.iiitnr.ac.in/login"
 ).split(",")
 
-CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", 30))
+CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", 5))
 
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", 5))

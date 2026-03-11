@@ -26,14 +26,14 @@ services:
   filebeat:
     image: elastic/filebeat:8.12.0
     container_name: filebeat
-    user: root      # needed to read logs volume
+    user: root     
     volumes:
       - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - ./logs:/logs:ro
     depends_on:
       - elasticsearch
 
-  log-generator:                          # BUG #6 FIX — containerize it
+  log-generator:                         
     image: python:3.10-slim
     container_name: log-generator
     volumes:
@@ -42,14 +42,13 @@ services:
     working_dir: /app
     command: python -u generate_logs.py
     environment:
-      - LOG_FILE=/logs/app.log            # use absolute path
-
+      - LOG_FILE=/logs/app.log           
   health-check:
     build: ./health-check
     container_name: health-check
     volumes:
       - ./logs:/logs
-    environment:                          # BUG #7 FIX
+    environment:
       - TARGET_URLS=${TARGET_URLS:-https://scholar.iiitnr.ac.in/login}
       - CHECK_INTERVAL=${CHECK_INTERVAL:-30}
       - REQUEST_TIMEOUT=${REQUEST_TIMEOUT:-5}
@@ -59,14 +58,14 @@ services:
     container_name: analyzer
     environment:
       - ELASTIC_HOST=${ELASTIC_HOST:-http://elasticsearch:9200}
-      - JIRA_URL=${JIRA_URL}              # BUG #4 FIX — all from .env
+      - JIRA_URL=${JIRA_URL}             
       - JIRA_EMAIL=${JIRA_EMAIL}
-      - JIRA_TOKEN=${JIRA_TOKEN}          # no quotes, pulled from .env
+      - JIRA_TOKEN=${JIRA_TOKEN}         
       - JIRA_PROJECT=${JIRA_PROJECT:-OPS}
       - CHECK_INTERVAL=${CHECK_INTERVAL:-30}
       - DEDUP_TIME=${DEDUP_TIME:-600}
     env_file:
-      - .env                              # loads your .env file
+      - .env                             
     depends_on:
       - elasticsearch
 

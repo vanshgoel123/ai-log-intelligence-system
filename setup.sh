@@ -1,39 +1,31 @@
 #!/bin/bash
+set -e
 
-echo "========================================"
 echo "AI Log Intelligence System Setup"
-echo "========================================"
 
 echo "Checking Docker..."
-
-if ! command -v docker &> /dev/null
+if ! command -v docker > /dev/null 2>&1
 then
     echo "Docker not installed!"
-    exit
+    exit 1
 fi
-
 echo "Docker OK"
 
 echo "Checking Docker Compose..."
-
-if ! command -v docker compose &> /dev/null
+if ! docker compose version > /dev/null 2>&1
 then
     echo "Docker Compose missing!"
-    exit
+    exit 1
 fi
-
 echo "Docker Compose OK"
 
 echo ""
 echo "Creating logs directory..."
-
 mkdir -p logs
 
 echo ""
 echo "Starting monitoring system..."
-
 docker compose down
-
 docker compose up -d --build
 
 echo ""
@@ -46,7 +38,6 @@ echo "Kibana -> http://localhost:5601"
 
 echo ""
 echo "Checking containers..."
-
 docker ps
 
 echo ""
